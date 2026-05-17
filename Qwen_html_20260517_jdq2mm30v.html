@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосование</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+        h1 { color: #333; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { 
+            display: block; width: 100%; padding: 15px; margin: 10px 0; 
+            font-size: 18px; border: none; border-radius: 5px; cursor: pointer; 
+            transition: 0.2s; color: white;
+        }
+        .btn-1 { background-color: #3498db; }
+        .btn-2 { background-color: #e74c3c; }
+        .btn:active { transform: scale(0.98); }
+        #result { margin-top: 20px; font-size: 18px; color: #555; }
+        .loading { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Голосование</h1>
+        <p>Выберите вариант:</p>
+        
+        <button class="btn btn-1" onclick="vote('option1')">Вариант 1 (Синий)</button>
+        <button class="btn btn-2" onclick="vote('option2')">Вариант 2 (Красный)</button>
+
+        <div id="result">Загрузка...</div>
+    </div>
+
+    <script>
+        // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ НА WORKER
+        const API_URL = "https://voting-api.roma.workers.dev"; 
+
+        async function updateResults() {
+            try {
+                const res = await fetch(`${API_URL}/votes`);
+                const data = await res.json();
+                document.getElementById('result').innerHTML = 
+                    `Вариант 1: ${data.option1}<br>Вариант 2: ${data.option2}`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function vote(choice) {
+            const btns = document.querySelectorAll('.btn');
+            btns.forEach(b => b.classList.add('loading')); // Блокируем кнопки
+
+            try {
+                await fetch(`${API_URL}/vote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ choice: choice })
+                });
+                await updateResults(); // Обновляем сразу после голоса
+            } catch (e) {
+                alert("Ошибка голосования");
+            } finally {
+                btns.forEach(b => b.classList.remove('loading'));
+            }
+        }
+
+        // Загружаем результаты при старте
+        updateResults();
+        
+        // Можно обновлять каждые 5 секунд, если нужно live-обновление без действий пользователя
+        // setInterval(updateResults, 5000); 
+    </script>
+</body>
+</html>
