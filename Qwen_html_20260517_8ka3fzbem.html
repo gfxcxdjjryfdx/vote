@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосование</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        .btn { padding: 15px 30px; font-size: 18px; margin: 10px; cursor: pointer; }
+        #result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Онлайн Голосование</h1>
+    <p>Выберите вариант:</p>
+    
+    <button class="btn" onclick="vote('option1')">Вариант 1</button>
+    <button class="btn" onclick="vote('option2')">Вариант 2</button>
+
+    <div id="result">Загрузка результатов...</div>
+
+    <!-- Подключаем Firebase (замени на свои конфиги) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // TODO: Вставь сюда свой конфиг из Firebase Console
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Функция голосования
+        window.vote = function(option) {
+            const optionRef = ref(db, 'votes/' + option);
+            runTransaction(optionRef, (currentVotes) => {
+                return (currentVotes || 0) + 1;
+            }).then(() => {
+                alert("Голос принят!");
+            });
+        }
+
+        // Слушаем изменения в реальном времени
+        const votesRef = ref(db, 'votes');
+        onValue(votesRef, (snapshot) => {
+            const data = snapshot.val();
+            const opt1 = data?.option1 || 0;
+            const opt2 = data?.option2 || 0;
+            document.getElementById('result').innerHTML = 
+                `Вариант 1: ${opt1}<br>Вариант 2: ${opt2}`;
+        });
+    </script>
+</body>
+</html>
